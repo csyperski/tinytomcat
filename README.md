@@ -9,4 +9,4 @@ Tine Tomcat will build to a single jar file that can be used to serve static fil
 
 `cd target`
 
-java -jar tinytomc
+`java -jar tinytomcat-*.jar [web-root-path(default=.)] [port(default=8080)]`
