@@ -3,6 +3,7 @@
  */
 package com.cwssoft.tinytomcat;
 
+import org.apache.catalina.Globals;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.startup.Tomcat;
@@ -10,6 +11,7 @@ import org.apache.catalina.startup.Tomcat;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 /**
@@ -36,6 +38,7 @@ public class Driver {
 
         final int port = getPort(args);
         final String webRoot = getWebRoot(args);
+        final Optional<String> webXml = getWebXmlPath(args);
 
         log.info("Using web root: " + webRoot + " on port: " + port);
 
@@ -46,13 +49,15 @@ public class Driver {
 
         StandardContext ctx = (StandardContext) tomcat.addWebapp("", new File(webRoot).getAbsolutePath());
 
-
         Wrapper defaultServlet = ctx.createWrapper();
         defaultServlet.setName("default");
         defaultServlet.setServletClass("org.apache.catalina.servlets.DefaultServlet");
         defaultServlet.addInitParameter("debug", "0");
         defaultServlet.addInitParameter("listings", "false");
+
         defaultServlet.setLoadOnStartup(1);
+
+        webXml.ifPresent(path -> ctx.getServletContext().setAttribute(Globals.ALT_DD_ATTR, path));
 
         ctx.setAddWebinfClassesResources(false);
         ctx.addChild(defaultServlet);
@@ -90,6 +95,13 @@ public class Driver {
         return ROOT;
     }
 
+    public static Optional<String> getWebXmlPath(String[] args) {
+        if ( args != null && args.length > 2 && args[2].trim().length() > 0 ) {
+            return Optional.ofNullable(args[2].trim());
+        }
+        return Optional.empty();
+    }
+
     public static boolean isHelp(String[] args) {
         if ( args != null && args.length > 0 && args[0].trim().length() > 0 ) {
             String firstArg = args[0].trim().toLowerCase(Locale.US);
@@ -102,7 +114,7 @@ public class Driver {
 
         System.err.println("");
         System.err.println("Usage:");
-        System.err.println("     java -jar tinytomcat.jar [web-root-path(default=.)] [port(default=8080)]");
+        System.err.println("     java -jar tinytomcat.jar [web-root-path(default=.)] [port(default=8080)] [webxml path]");
         System.err.println("");
 
     }
